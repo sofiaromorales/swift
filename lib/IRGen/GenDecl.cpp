@@ -5158,7 +5158,8 @@ llvm::Constant *IRGenModule::getAddrOfGlobalString(StringRef data,
     return entry.second;
   }
 
-  entry = createStringConstant(data, willBeRelativelyAddressed);
+  entry = createStringConstant(data, willBeRelativelyAddressed,
+                               /*sectionName*/ "", ".str");
   return entry.second;
 }
 
@@ -5187,9 +5188,10 @@ llvm::Constant *IRGenModule::getAddrOfGlobalUTF16String(StringRef utf8) {
   ArrayRef<llvm::UTF16> utf16(&buffer[0], utf16Length + 1);
 
   auto init = llvm::ConstantDataArray::get(getLLVMContext(), utf16);
+  auto name = ".str"; // Cargo-culted from Clang's handling of C strings.
   auto global = new llvm::GlobalVariable(Module, init->getType(), true,
                                          llvm::GlobalValue::PrivateLinkage,
-                                         init);
+                                         init, name);
   global->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
 
   // Drill down to make an i16*.
